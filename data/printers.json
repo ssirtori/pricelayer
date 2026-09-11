@@ -1,0 +1,965 @@
+{
+  "bambu-lab-a1-mini": {
+    "id": "bambu-lab-a1-mini",
+    "brand": "Bambu Lab",
+    "model": "A1 mini",
+    "type": "FDM — bed-slinging desktop printer",
+    "buildVolume": {
+      "x": 180,
+      "y": 180,
+      "z": 180
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 80,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 10000,
+    "energy": {
+      "ratedPowerW": 150,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Official average print consumption not published."
+    }
+  },
+
+  "bambu-lab-a1": {
+    "id": "bambu-lab-a1",
+    "brand": "Bambu Lab",
+    "model": "A1",
+    "type": "FDM — bed-slinging desktop printer",
+    "buildVolume": {
+      "x": 256,
+      "y": 256,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 10000,
+    "energy": {
+      "ratedPowerW": 1300,
+      "idleW": 4.5,
+      "averagePrintW": 95,
+      "byMaterialW": {
+        "PLA": 95,
+        "ABS": 200,
+        "PC": 150
+      },
+      "note": "Average consumption based on published measurements."
+    }
+  },
+
+  "bambu-lab-a2l": {
+    "id": "bambu-lab-a2l",
+    "brand": "Bambu Lab",
+    "model": "A2L",
+    "type": "FDM — large-format bed-slinging printer",
+    "buildVolume": {
+      "x": 260,
+      "y": 260,
+      "z": 300
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 10000,
+    "energy": {
+      "ratedPowerW": 1300,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "bambu-lab-p1s": {
+    "id": "bambu-lab-p1s",
+    "brand": "Bambu Lab",
+    "model": "P1S",
+    "type": "FDM — enclosed CoreXY printer",
+    "buildVolume": {
+      "x": 256,
+      "y": 256,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 1000,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Rated power is not equivalent to average print consumption."
+    }
+  },
+
+  "bambu-lab-p2s": {
+    "id": "bambu-lab-p2s",
+    "brand": "Bambu Lab",
+    "model": "P2S",
+    "type": "FDM — enclosed CoreXY printer",
+    "buildVolume": {
+      "x": 256,
+      "y": 256,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 1000,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "bambu-lab-h2s": {
+    "id": "bambu-lab-h2s",
+    "brand": "Bambu Lab",
+    "model": "H2S",
+    "type": "FDM — enclosed CoreXY printer",
+    "buildVolume": {
+      "x": 340,
+      "y": 320,
+      "z": 340
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 350,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 1000,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 1100,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "bambu-lab-h2d": {
+    "id": "bambu-lab-h2d",
+    "brand": "Bambu Lab",
+    "model": "H2D",
+    "type": "FDM — dual-nozzle CoreXY printer",
+    "buildVolume": {
+      "x": 350,
+      "y": 320,
+      "z": 325
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 350,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 1000,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 1100,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "bambu-lab-h2d-pro": {
+    "id": "bambu-lab-h2d-pro",
+    "brand": "Bambu Lab",
+    "model": "H2D Pro",
+    "type": "FDM — professional dual-nozzle CoreXY printer",
+    "buildVolume": {
+      "x": 350,
+      "y": 320,
+      "z": 325
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 350,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 1000,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 1100,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "bambu-lab-h2c": {
+    "id": "bambu-lab-h2c",
+    "brand": "Bambu Lab",
+    "model": "H2C",
+    "type": "FDM — multi-material CoreXY printer",
+    "buildVolume": {
+      "x": 330,
+      "y": 320,
+      "z": 325
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 350,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 1000,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 1100,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "bambu-lab-x2d": {
+    "id": "bambu-lab-x2d",
+    "brand": "Bambu Lab",
+    "model": "X2D",
+    "type": "FDM — advanced CoreXY printer",
+    "buildVolume": {
+      "x": 256,
+      "y": 256,
+      "z": 260
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 350,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 700,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 1000,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "anycubic-kobra-3": {
+    "id": "anycubic-kobra-3",
+    "brand": "Anycubic",
+    "model": "Kobra 3",
+    "type": "FDM — high-speed bed-slinging printer",
+    "buildVolume": {
+      "x": 250,
+      "y": 250,
+      "z": 260
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 110,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 600,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "anycubic-kobra-3-v2": {
+    "id": "anycubic-kobra-3-v2",
+    "brand": "Anycubic",
+    "model": "Kobra 3 V2",
+    "type": "FDM — high-speed bed-slinging printer",
+    "buildVolume": {
+      "x": 255,
+      "y": 255,
+      "z": 260
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 110,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 600,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "anycubic-kobra-3-max": {
+    "id": "anycubic-kobra-3-max",
+    "brand": "Anycubic",
+    "model": "Kobra 3 Max",
+    "type": "FDM — large-format high-speed printer",
+    "buildVolume": {
+      "x": 420,
+      "y": 420,
+      "z": 500
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 90,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 1100,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "anycubic-kobra-3-max-v2": {
+    "id": "anycubic-kobra-3-max-v2",
+    "brand": "Anycubic",
+    "model": "Kobra 3 Max V2",
+    "type": "FDM — large-format high-speed printer",
+    "buildVolume": {
+      "x": 420,
+      "y": 420,
+      "z": 500
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 90,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 1100,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "anycubic-kobra-x": {
+    "id": "anycubic-kobra-x",
+    "brand": "Anycubic",
+    "model": "Kobra X",
+    "type": "FDM — high-speed multi-color bed-slinging printer",
+    "buildVolume": {
+      "x": 260,
+      "y": 260,
+      "z": 260
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 1450,
+      "idleW": 7,
+      "averagePrintW": 120,
+      "byMaterialW": {},
+      "note": "120 W is an indicative average estimate, not an official Anycubic specification."
+    }
+  },
+
+  "anycubic-kobra-4": {
+    "id": "anycubic-kobra-4",
+    "brand": "Anycubic",
+    "model": "Kobra 4",
+    "type": "FDM — high-speed bed-slinging printer",
+    "buildVolume": {
+      "x": 260,
+      "y": 260,
+      "z": 260
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": null,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 600,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "anycubic-kobra-s1": {
+    "id": "anycubic-kobra-s1",
+    "brand": "Anycubic",
+    "model": "Kobra S1",
+    "type": "FDM — enclosed CoreXY high-speed printer",
+    "buildVolume": {
+      "x": 250,
+      "y": 250,
+      "z": 250
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 320,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 850,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "anycubic-kobra-s1-max": {
+    "id": "anycubic-kobra-s1-max",
+    "brand": "Anycubic",
+    "model": "Kobra S1 Max",
+    "type": "FDM — large-format enclosed CoreXY printer",
+    "buildVolume": {
+      "x": 350,
+      "y": 350,
+      "z": 350
+    },
+    "nozzle": "0.4 mm hardened steel",
+    "maxHotendTempC": 350,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 950,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "flashforge-adventurer-5m": {
+    "id": "flashforge-adventurer-5m",
+    "brand": "Flashforge",
+    "model": "Adventurer 5M",
+    "type": "FDM — high-speed desktop printer",
+    "buildVolume": {
+      "x": 220,
+      "y": 220,
+      "z": 220
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 280,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 350,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Rated power; average print consumption not published."
+    }
+  },
+
+  "flashforge-adventurer-5m-pro": {
+    "id": "flashforge-adventurer-5m-pro",
+    "brand": "Flashforge",
+    "model": "Adventurer 5M Pro",
+    "type": "FDM — enclosed high-speed desktop printer",
+    "buildVolume": {
+      "x": 220,
+      "y": 220,
+      "z": 220
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 280,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 350,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Rated power; average print consumption not published."
+    }
+  },
+
+  "flashforge-ad5x": {
+    "id": "flashforge-ad5x",
+    "brand": "Flashforge",
+    "model": "AD5X",
+    "type": "FDM — high-speed multi-color CoreXY printer",
+    "buildVolume": {
+      "x": 220,
+      "y": 220,
+      "z": 220
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 280,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 350,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "flashforge-creator-5": {
+    "id": "flashforge-creator-5",
+    "brand": "Flashforge",
+    "model": "Creator 5",
+    "type": "FDM — professional multi-toolhead printer",
+    "buildVolume": {
+      "x": 256,
+      "y": 256,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 320,
+    "maxBedTempC": 110,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 750,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "flashforge-creator-5-pro": {
+    "id": "flashforge-creator-5-pro",
+    "brand": "Flashforge",
+    "model": "Creator 5 Pro",
+    "type": "FDM — enclosed professional multi-toolhead printer",
+    "buildVolume": {
+      "x": 256,
+      "y": 256,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 320,
+    "maxBedTempC": 110,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 850,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "flashforge-guider-3-ultra": {
+    "id": "flashforge-guider-3-ultra",
+    "brand": "Flashforge",
+    "model": "Guider 3 Ultra",
+    "type": "FDM — large-format professional printer",
+    "buildVolume": {
+      "x": 330,
+      "y": 330,
+      "z": 600
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 850,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Maximum rated input/output power; not average consumption."
+    }
+  },
+
+  "flashforge-cj270": {
+    "id": "flashforge-cj270",
+    "brand": "Flashforge",
+    "model": "CJ270",
+    "type": "FDM — full-color desktop printer",
+    "buildVolume": {
+      "x": 270,
+      "y": 270,
+      "z": 270
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": null,
+    "maxBedTempC": null,
+    "maxSpeedMmS": null,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 500,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-centauri-2": {
+    "id": "elegoo-centauri-2",
+    "brand": "ELEGOO",
+    "model": "Centauri 2",
+    "type": "FDM — CoreXY high-speed printer",
+    "buildVolume": {
+      "x": 256,
+      "y": 256,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 350,
+    "maxBedTempC": 110,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 800,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-centauri-carbon-2": {
+    "id": "elegoo-centauri-carbon-2",
+    "brand": "ELEGOO",
+    "model": "Centauri Carbon 2",
+    "type": "FDM — enclosed CoreXY high-speed printer",
+    "buildVolume": {
+      "x": 256,
+      "y": 256,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 350,
+    "maxBedTempC": 110,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 800,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-centauri-carbon": {
+    "id": "elegoo-centauri-carbon",
+    "brand": "ELEGOO",
+    "model": "Centauri Carbon",
+    "type": "FDM — enclosed CoreXY printer",
+    "buildVolume": {
+      "x": 256,
+      "y": 256,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 800,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-neptune-4": {
+    "id": "elegoo-neptune-4",
+    "brand": "ELEGOO",
+    "model": "Neptune 4",
+    "type": "FDM — high-speed desktop printer",
+    "buildVolume": {
+      "x": 225,
+      "y": 225,
+      "z": 265
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 110,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 12000,
+    "energy": {
+      "ratedPowerW": 350,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-neptune-4-pro": {
+    "id": "elegoo-neptune-4-pro",
+    "brand": "ELEGOO",
+    "model": "Neptune 4 Pro",
+    "type": "FDM — high-speed desktop printer",
+    "buildVolume": {
+      "x": 225,
+      "y": 225,
+      "z": 265
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 110,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 12000,
+    "energy": {
+      "ratedPowerW": 400,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-neptune-4-plus": {
+    "id": "elegoo-neptune-4-plus",
+    "brand": "ELEGOO",
+    "model": "Neptune 4 Plus",
+    "type": "FDM — large-format high-speed printer",
+    "buildVolume": {
+      "x": 320,
+      "y": 320,
+      "z": 385
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 12000,
+    "energy": {
+      "ratedPowerW": 500,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-neptune-4-max": {
+    "id": "elegoo-neptune-4-max",
+    "brand": "ELEGOO",
+    "model": "Neptune 4 Max",
+    "type": "FDM — large-format high-speed printer",
+    "buildVolume": {
+      "x": 420,
+      "y": 420,
+      "z": 480
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 85,
+    "maxSpeedMmS": 500,
+    "maxAccelMmS2": 8000,
+    "energy": {
+      "ratedPowerW": 600,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-neptune-3-pro": {
+    "id": "elegoo-neptune-3-pro",
+    "brand": "ELEGOO",
+    "model": "Neptune 3 Pro",
+    "type": "FDM — desktop printer",
+    "buildVolume": {
+      "x": 225,
+      "y": 225,
+      "z": 280
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 260,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 180,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 350,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-neptune-3-plus": {
+    "id": "elegoo-neptune-3-plus",
+    "brand": "ELEGOO",
+    "model": "Neptune 3 Plus",
+    "type": "FDM — large-format desktop printer",
+    "buildVolume": {
+      "x": 320,
+      "y": 320,
+      "z": 400
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 260,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 180,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 500,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-neptune-3-max": {
+    "id": "elegoo-neptune-3-max",
+    "brand": "ELEGOO",
+    "model": "Neptune 3 Max",
+    "type": "FDM — large-format desktop printer",
+    "buildVolume": {
+      "x": 420,
+      "y": 420,
+      "z": 500
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 260,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 180,
+    "maxAccelMmS2": null,
+    "energy": {
+      "ratedPowerW": 600,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "elegoo-orangestorm-giga": {
+    "id": "elegoo-orangestorm-giga",
+    "brand": "ELEGOO",
+    "model": "OrangeStorm Giga",
+    "type": "FDM — industrial large-format printer",
+    "buildVolume": {
+      "x": 800,
+      "y": 800,
+      "z": 1000
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 300,
+    "maxBedTempC": 100,
+    "maxSpeedMmS": 300,
+    "maxAccelMmS2": 5000,
+    "energy": {
+      "ratedPowerW": 1500,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "qidi-q2c": {
+    "id": "qidi-q2c",
+    "brand": "QIDI",
+    "model": "Q2C",
+    "type": "FDM — enclosed CoreXY printer",
+    "buildVolume": {
+      "x": 270,
+      "y": 270,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 370,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 350,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Rated power; average print consumption not published."
+    }
+  },
+
+  "qidi-q2": {
+    "id": "qidi-q2",
+    "brand": "QIDI",
+    "model": "Q2",
+    "type": "FDM — enclosed CoreXY printer",
+    "buildVolume": {
+      "x": 270,
+      "y": 270,
+      "z": 256
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 370,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 350,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Estimated rated power (typical for this class); official average print consumption not published."
+    }
+  },
+
+  "qidi-plus-4": {
+    "id": "qidi-plus-4",
+    "brand": "QIDI",
+    "model": "Plus 4",
+    "type": "FDM — enclosed CoreXY high-temperature printer",
+    "buildVolume": {
+      "x": 305,
+      "y": 305,
+      "z": 280
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 370,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 600,
+    "maxAccelMmS2": 20000,
+    "energy": {
+      "ratedPowerW": 850,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Maximum rated system power; average print consumption not published."
+    }
+  },
+
+  "qidi-max4": {
+    "id": "qidi-max4",
+    "brand": "QIDI",
+    "model": "Max4",
+    "type": "FDM — large-format enclosed CoreXY high-temperature printer",
+    "buildVolume": {
+      "x": 390,
+      "y": 390,
+      "z": 340
+    },
+    "nozzle": "0.4 mm",
+    "maxHotendTempC": 370,
+    "maxBedTempC": 120,
+    "maxSpeedMmS": 800,
+    "maxAccelMmS2": 30000,
+    "energy": {
+      "ratedPowerW": 1350,
+      "idleW": null,
+      "averagePrintW": null,
+      "byMaterialW": {},
+      "note": "Maximum rated power; average print consumption not published."
+    }
+  }
+}
