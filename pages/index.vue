@@ -1,5 +1,6 @@
 <script setup>
 import { use3mfParser } from '~/composables/use3mfParser'
+import { MATERIALS } from '~/data/materials'
 import printers from '~/data/printers.json'
 
 const file = ref(null)
@@ -7,7 +8,7 @@ const analyzing = ref(false)
 const error = ref('')
 const analysis = ref(null)
 const material = ref('PLA')
-const infill = ref(20)
+const infill = ref(15)
 const wallThickness = ref(0.5)
 const printerId = ref(
   Object.values(printers).find(p => p.energy?.averagePrintW || Object.keys(p.energy?.byMaterialW || {}).length > 0)?.id
@@ -17,6 +18,8 @@ const printerId = ref(
 const kwhRate = ref(0.4)
 const printTimeHours = ref(null)
 const filamentPrice = ref(null)
+const weightOverride = ref(null)
+const costAdjustment = ref(0)
 
 async function handleFile (upcomingFile) {
   error.value = ''
@@ -25,12 +28,29 @@ async function handleFile (upcomingFile) {
   analyzing.value = true
 
   try {
-    analysis.value = await use3mfParser(upcomingFile)
+    const result = await use3mfParser(upcomingFile)
+    analysis.value = result
+    applyProjectSettings(result)
   } catch (err) {
     analysis.value = null
     error.value = err?.message || 'Something went wrong while analyzing this file.'
   } finally {
     analyzing.value = false
+  }
+}
+
+// Load the print-profile settings a slicer (Bambu/Orca) embedded in the file
+// so the geometric estimate defaults to the project's real parameters. Only
+// applied once per new file; values the file does not carry keep their
+// current/default values.
+function applyProjectSettings (result) {
+  const settings = result.settings
+  if (!settings) return
+  if (settings.infillPercent != null) infill.value = settings.infillPercent
+  if (settings.wallThicknessMm != null) wallThickness.value = settings.wallThicknessMm
+  if (settings.filamentType) {
+    const base = settings.filamentType.toUpperCase().split('-')[0]
+    if (MATERIALS.some(m => m.id === base)) material.value = base
   }
 }
 
@@ -87,6 +107,8 @@ function clearFile () {
         v-model:kwhRate="kwhRate"
         v-model:printTime="printTimeHours"
         v-model:filamentPrice="filamentPrice"
+        v-model:weightOverride="weightOverride"
+        v-model:costAdjustment="costAdjustment"
       />
     </div>
 

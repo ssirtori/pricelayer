@@ -1,7 +1,8 @@
 import JSZip from 'jszip'
+import * as THREE from 'three'
 import { XMLParser } from 'fast-xml-parser'
 import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
-import { computeGroupAnalysis } from './useMeshVolume.js'
+import { computeGroupAnalysis, streamMeshObjects, accumulateMeshMeasurement } from './useMeshVolume.js'
 
 const MODEL_RE = /\.model$/i
 const MESH_RE = /\.(stl|obj)$/i
@@ -59,7 +60,8 @@ export class ThreeMfError extends Error {
  *   mode: 'raw' | 'sliced',
  *   geometry: { volumeMm3, volumeCm3, surfaceAreaMm2, meshCount, bbox } | null,
  *   slicer:   { weightG, lengthM, volumeCm3, durationH, durationSource, source, plates, filamentTypes, colors } | null,
- *   objectCount, buildItems, meshCount, materials, plates
+ *   objectCount, buildItems, meshCount, materials, plates,
+ *   settings: { infillPercent, wallThicknessMm, layerHeight, filamentType } | null
  * }
  */
 export async function use3mfParser (file) {
@@ -80,6 +82,7 @@ export async function use3mfParser (file) {
 
   const modelEntries = entries.filter(entry => MODEL_RE.test(entry.name))
   const slicer = await scanSlicerData(zip, entries)
+  const settings = await scanProjectSettings(entries)
 
   const result = {
     fileName: file.name,
@@ -87,6 +90,7 @@ export async function use3mfParser (file) {
     mode: 'raw',
     geometry: null,
     slicer,
+    settings,
     objectCount: 0,
     buildItems: 0,
     meshCount: 0,
@@ -112,7 +116,21 @@ export async function use3mfParser (file) {
           result.meshCount = analysis.meshCount
         }
       } catch {
-        // Keep going: slicer metadata may still be usable on its own.
+        // three's 3MFLoader reads every .model part as one JS string, which
+        // V8 caps at ~512 MB — meshes larger than that throw. Fall through
+        // to the streaming scan below.
+      }
+
+      if (!result.geometry) {
+        try {
+          const streamed = await computeStreamedGeometry(zip, modelEntries, primary)
+          if (streamed && streamed.meshCount > 0 && streamed.volumeMm3 > 0) {
+            result.geometry = streamed
+            result.meshCount = streamed.meshCount
+          }
+        } catch {
+          // both parsing paths failed; slicer metadata may still be usable
+        }
       }
     }
   }
@@ -175,6 +193,175 @@ async function findPrimaryModel (zip, modelEntries) {
   }
 
   return modelEntries[0] ? { file: modelEntries[0] } : null
+}
+
+/* ------------------------------------------------------------------ */
+/* Streaming fallback for very large meshes                           */
+/* ------------------------------------------------------------------ */
+
+function normalizeModelPath (name) {
+  return String(name).replace(/^\/+/, '').toLowerCase()
+}
+
+function unitToMmScale (unit) {
+  switch (String(unit || '').toLowerCase()) {
+    case 'micron': return 0.001
+    case 'centimeter': return 10
+    case 'inch': return 25.4
+    case 'foot': return 304.8
+    case 'meter': return 1000
+    default: return 1
+  }
+}
+
+function parseTransformMatrix (value) {
+  const nums = String(value ?? '').trim().split(/\s+/).map(Number)
+  if (nums.length !== 12 && nums.length !== 16) return null
+  const matrix = new THREE.Matrix4()
+  if (nums.length === 16) matrix.set(
+    nums[0], nums[4], nums[8], nums[12],
+    nums[1], nums[5], nums[9], nums[13],
+    nums[2], nums[6], nums[10], nums[14],
+    nums[3], nums[7], nums[11], nums[15]
+  )
+  else matrix.set(
+    nums[0], nums[3], nums[6], nums[9],
+    nums[1], nums[4], nums[7], nums[10],
+    nums[2], nums[5], nums[8], nums[11],
+    0, 0, 0, 1
+  )
+  return matrix
+}
+
+function findStreamObjectNode (doc, objectId) {
+  return Array.from(doc.querySelectorAll('object'))
+    .find(node => Number(node.getAttribute('id')) === objectId) ?? null
+}
+
+function streamDomComponents (node) {
+  const components = []
+  for (const element of node.querySelectorAll('component')) {
+    const path = Array.from(element.attributes)
+      .find(attr => (attr.localName || attr.name) === 'path')?.value ?? null
+    const objectId = Number(element.getAttribute('objectid'))
+    if (!Number.isFinite(objectId)) continue
+    components.push({ objectId, path, transform: parseTransformMatrix(element.getAttribute('transform')) })
+  }
+  return components
+}
+
+/**
+ * Fallback when three's 3MFLoader cannot handle a mesh (its .model XML is
+ * too large for a single JS string). Builds the same build/component tree as
+ * three, resolves every instanced mesh part, and measures the geometry from
+ * the raw chunked XML via `streamMeshObjects`.
+ */
+export async function computeStreamedGeometry (zip, modelEntries, primary) {
+  const primaryText = await primary.file.async('text').catch(() => '')
+  if (!primaryText) return null
+
+  let doc
+  try {
+    doc = new DOMParser().parseFromString(primaryText, 'application/xml')
+  } catch {
+    return null
+  }
+  if (!doc || doc.getElementsByTagName('parsererror').length > 0) return null
+
+  const unitScale = unitToMmScale(doc.documentElement?.getAttribute('unit'))
+  const entryByName = new Map(modelEntries.map(entry => [normalizeModelPath(entry.name), entry]))
+  const primaryPath = normalizeModelPath(primary.file.name)
+  const streamedCache = new Map()
+  const instances = []
+
+  const streamEntry = (entry) => {
+    if (!streamedCache.has(entry)) streamedCache.set(entry, streamMeshObjects(entry))
+    return streamedCache.get(entry)
+  }
+
+  // Recursively resolve the build/component tree. `matrix` is the world
+  // matrix inherited from the parent (build item × components), matching
+  // three's parentWorld × local multiplication order.
+  const walk = async (objectId, entry, matrix) => {
+    const isPrimary = normalizeModelPath(entry.name) === primaryPath
+    let transform = null
+    let hasMesh = false
+    let components = []
+    if (isPrimary) {
+      const node = findStreamObjectNode(doc, objectId)
+      if (!node) return
+      transform = parseTransformMatrix(node.getAttribute('transform'))
+      hasMesh = node.querySelector('mesh') != null
+      components = streamDomComponents(node)
+    } else {
+      const mesh = await streamEntry(entry)
+      const object = mesh.get(objectId)
+      if (!object) return
+      transform = object.transform
+      hasMesh = object.positions.length > 0
+      components = object.components || []
+    }
+
+    const world = new THREE.Matrix4().multiplyMatrices(matrix, transform ?? new THREE.Matrix4())
+    if (hasMesh) instances.push({ entry, objectId, matrix: world })
+
+    for (const component of components) {
+      const childPath = component.path ? normalizeModelPath(component.path) : normalizeModelPath(entry.name)
+      const childEntry = entryByName.get(childPath)
+      if (!childEntry) continue
+      const childWorld = new THREE.Matrix4().multiplyMatrices(world, component.transform ?? new THREE.Matrix4())
+      await walk(component.objectId, childEntry, childWorld)
+    }
+  }
+
+const build = doc.querySelector('build')
+  if (build) {
+    for (const item of Array.from(build.children).filter(child => child.localName === 'item')) {
+      const objectId = Number(item.getAttribute('objectid'))
+      if (!Number.isFinite(objectId)) continue
+      await walk(objectId, primary.file, parseTransformMatrix(item.getAttribute('transform')) ?? new THREE.Matrix4())
+    }
+  }
+
+  if (instances.length === 0) return null
+
+  let volumeMm3 = 0
+  let surfaceAreaMm2 = 0
+  let meshCount = 0
+  let minX = Infinity
+  let minY = Infinity
+  let minZ = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  let maxZ = -Infinity
+
+  for (const instance of instances) {
+    const objects = await streamEntry(instance.entry)
+    const mesh = objects.get(instance.objectId)
+    if (!mesh || mesh.triangles.length === 0) continue
+    const measured = accumulateMeshMeasurement(mesh.positions, mesh.triangles, instance.matrix, unitScale)
+    volumeMm3 += measured.volume
+    surfaceAreaMm2 += measured.area
+    meshCount++
+    minX = Math.min(minX, measured.min.x)
+    minY = Math.min(minY, measured.min.y)
+    minZ = Math.min(minZ, measured.min.z)
+    maxX = Math.max(maxX, measured.max.x)
+    maxY = Math.max(maxY, measured.max.y)
+    maxZ = Math.max(maxZ, measured.max.z)
+  }
+
+  if (!(meshCount > 0 && volumeMm3 > 0)) return null
+
+  return {
+    volumeMm3,
+    volumeCm3: volumeMm3 / 1000,
+    surfaceAreaMm2,
+    meshCount,
+    bbox: isFinite(minX) && isFinite(maxX)
+      ? { x: maxX - minX, y: maxY - minY, z: maxZ - minZ }
+      : null
+  }
 }
 
 /**
@@ -301,6 +488,55 @@ async function scanSlicerData (zip, entries) {
 }
 
 /**
+ * Read the print-profile settings a slicer (Bambu Studio / OrcaSlicer) embeds
+ * in Metadata/project_settings.config. The file is a JSON blob; we extract the
+ * keys that map onto our geometric shell-and-infill model so the raw estimate
+ * can default to the slicer's actual parameters instead of arbitrary
+ * 0.5 mm / 20% values. Returns null when the archive has no such file or the
+ * keys are missing.
+ */
+async function scanProjectSettings (entries) {
+  const entry = entries.find((e) => /project_settings\.config$/i.test(e.name))
+  if (!entry) return null
+
+  let text
+  try {
+    text = await entry.async('text')
+  } catch {
+    return null
+  }
+  if (!text) return null
+
+  const getNum = (key) => {
+    const match = new RegExp(`\\b["']?${key}["']?\\s*[:=]\\s*["']?\\s*([0-9]+(?:\\.[0-9]+)?)`, 'i').exec(text)
+    if (!match) return null
+    const value = parseFloat(match[1])
+    return isFinite(value) ? value : null
+  }
+
+  const settings = { infillPercent: null, wallThicknessMm: null, layerHeight: null, filamentType: null }
+
+  const infill = getNum('sparse_infill_density')
+  if (infill != null) settings.infillPercent = Math.min(100, Math.max(0, infill))
+
+  const wallLoops = getNum('wall_loops')
+  if (wallLoops != null && wallLoops > 0) {
+    const outer = getNum('outer_wall_line_width') ?? 0.42
+    const inner = getNum('inner_wall_line_width') ?? 0.45
+    settings.wallThicknessMm = Math.round((outer + (wallLoops - 1) * inner) * 1000) / 1000
+  }
+
+  const layerHeight = getNum('layer_height')
+  if (layerHeight != null) settings.layerHeight = layerHeight
+
+  const typeMatch = /["']?filament_type["']?\s*:\s*\[\s*"([^"]+)"/i.exec(text)
+  if (typeMatch) settings.filamentType = typeMatch[1].trim()
+
+  if (settings.infillPercent == null && settings.wallThicknessMm == null && settings.filamentType == null) return null
+  return settings
+}
+
+/**
  * Parse Bambu/Orca style XML (`<metadata key="weight" value="12.34"/>` and
  * `<filament used_g="12.34" used_m="4.05" type="PLA" color="#fff"/>`) as well
  * as generic attribute/value pairs.
@@ -397,7 +633,8 @@ function classifyPair (pair, fileName, buckets) {
     }
     return
   }
-  if (/volume|mm3|mm\^3/.test(key)) {
+  if (/volume|mm3|mm\^3/.test(key) && !/_id$/.test(key)) {
+    // ignore identifiers like source_volume_id that merely reference a volume
     const match = /(-?[0-9]*\.?[0-9]+)/.exec(rawValue)
     const value = match ? parseFloat(match[1]) : NaN
     if (isFinite(value) && value > 0) {

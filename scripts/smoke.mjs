@@ -3,7 +3,8 @@ import { JSDOM } from 'jsdom'
 globalThis.DOMParser = new JSDOM().window.DOMParser
 
 import JSZip from 'jszip'
-import { use3mfParser } from '../composables/use3mfParser.js'
+import { use3mfParser, computeStreamedGeometry } from '../composables/use3mfParser.js'
+import { streamMeshObjects, accumulateMeshMeasurement } from '../composables/useMeshVolume.js'
 
 const CONTENT_TYPES = `<?xml version="1.0"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -16,10 +17,7 @@ const RELS = `<?xml version="1.0"?>
   <Relationship Target="/3D/3dmodel.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>
 </Relationships>`
 
-const CUBE = `<?xml version="1.0" encoding="UTF-8"?>
-<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
-  <resources>
-    <object id="1" type="model">
+const CUBE_OBJECT = `<object id="1" type="model">
       <mesh>
         <vertices>
           <vertex x="0" y="0" z="0"/><vertex x="10" y="0" z="0"/><vertex x="10" y="10" z="0"/><vertex x="0" y="10" z="0"/>
@@ -34,7 +32,11 @@ const CUBE = `<?xml version="1.0" encoding="UTF-8"?>
           <triangle v1="3" v2="0" v3="4"/><triangle v1="3" v2="4" v3="7"/>
         </triangles>
       </mesh>
-    </object>
+    </object>`
+
+const CUBE = `<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+  <resources>
+    ${CUBE_OBJECT}
   </resources>
   <build>
     <item objectid="1"/>
@@ -149,3 +151,54 @@ try {
 } catch (err) {
   assert(err.code === 'invalid-archive', 'corrupted file -> invalid-archive', err.code)
 }
+
+// Streaming mesh fallback (huge meshes that trip three's ~512 MB string cap)
+const EXTERNAL_OBJECT = CUBE_OBJECT.replace('id="1"', 'id="7"').replace('<object', '<object transform="1 0 0 0 1 0 0 0 1 50 0 0"')
+const EXTERNAL_PART = `<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+  <resources>
+    ${EXTERNAL_OBJECT}
+  </resources>
+</model>`
+
+const COMPONENT_PRIMARY = `<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+ <resources>
+  <object id="10">
+   <components>
+    <component objectid="7" path="/3D/Objects/ext.model" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>
+   </components>
+  </object>
+ </resources>
+ <build><item objectid="10"/></build>
+</model>`
+
+const extZip = new JSZip()
+extZip.file('[Content_Types].xml', CONTENT_TYPES)
+extZip.file('_rels/.rels', RELS)
+extZip.file('3D/3dmodel.model', COMPONENT_PRIMARY)
+extZip.file('3D/Objects/ext.model', EXTERNAL_PART)
+const extBuf = await extZip.generateAsync({ type: 'nodebuffer' })
+const extLoader = await JSZip.loadAsync(extBuf)
+const extModelEntries = Object.values(extLoader.files).filter(e => !e.dir && /\.model$/i.test(e.name))
+const streamed = await computeStreamedGeometry(extLoader, extModelEntries, { file: extLoader.files['3D/3dmodel.model'] })
+assert(Math.abs(streamed.volumeCm3 - 1) < 1e-3, 'streamed component cube volume = 1 cm³ (translation-invariant)', streamed.volumeCm3)
+assert(Math.abs(streamed.surfaceAreaMm2 - 600) < 1e-3, 'streamed component cube area = 600 mm²', streamed.surfaceAreaMm2)
+assert(Math.abs(streamed.bbox.x - 10) < 1e-6, 'streamed cube bbox.x = 10mm', streamed.bbox)
+
+// Scaled component: 2× → volume ×8, area ×4
+const SCALED_PRIMARY = COMPONENT_PRIMARY.replace('transform="1 0 0 0 1 0 0 0 1 0 0 0"', 'transform="2 0 0 0 2 0 0 0 2 0 0 0"')
+extZip.file('3D/3dmodel.model', SCALED_PRIMARY)
+const scaledBuf = await extZip.generateAsync({ type: 'nodebuffer' })
+const scaledLoader = await JSZip.loadAsync(scaledBuf)
+const scaledModelEntries = Object.values(scaledLoader.files).filter(e => !e.dir && /\.model$/i.test(e.name))
+const scaledStream = await computeStreamedGeometry(scaledLoader, scaledModelEntries, { file: scaledLoader.files['3D/3dmodel.model'] })
+assert(Math.abs(scaledStream.volumeCm3 - 8) < 1e-3, 'streamed scaled cube volume = 8 cm³', scaledStream.volumeCm3)
+assert(Math.abs(scaledStream.surfaceAreaMm2 - 2400) < 1e-3, 'streamed scaled cube area = 2400 mm²', scaledStream.surfaceAreaMm2)
+
+// streamMeshObjects handles partial tags split across the 1 MB chunk boundary
+// and long non-tag runs (metadata) without losing data.
+const streamedObjects = await streamMeshObjects({ async: async () => new Uint8Array(await new Blob([EXTERNAL_PART]).arrayBuffer()) })
+const obj7 = streamedObjects.get(7)
+const identity = new (await import('three')).Matrix4()
+const measured = accumulateMeshMeasurement(obj7.positions, obj7.triangles, identity)
+assert(Math.abs(measured.volume / 1000 - 1) < 1e-6, 'streamMeshObjects volume = 1 cm³', measured.volume / 1000)
+assert(Math.abs(measured.area - 600) < 1e-6, 'streamMeshObjects area = 600 mm²', measured.area)
