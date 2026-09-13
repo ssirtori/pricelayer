@@ -5,6 +5,7 @@ globalThis.DOMParser = new JSDOM().window.DOMParser
 import JSZip from 'jszip'
 import { use3mfParser, computeStreamedGeometry } from '../composables/use3mfParser.js'
 import { streamMeshObjects, accumulateMeshMeasurement } from '../composables/useMeshVolume.js'
+import { computeWear, wearBracket } from '../composables/useWearCost.js'
 
 const CONTENT_TYPES = `<?xml version="1.0"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -202,3 +203,46 @@ const identity = new (await import('three')).Matrix4()
 const measured = accumulateMeshMeasurement(obj7.positions, obj7.triangles, identity)
 assert(Math.abs(measured.volume / 1000 - 1) < 1e-6, 'streamMeshObjects volume = 1 cm³', measured.volume / 1000)
 assert(Math.abs(measured.area - 600) < 1e-6, 'streamMeshObjects area = 600 mm²', measured.area)
+
+// Printer wear-and-tear model (composables/useWearCost.js)
+const b = p => wearBracket(p)
+assert(b(null) == null && b(0) == null && b(-5) == null, 'wearBracket ignores missing/zero/negative prices', b(null))
+const bounds = [[300, 3500, 0.25], [301, 5000, 0.30], [600, 5000, 0.30], [601, 6000, 0.35], [1000, 6000, 0.35], [1001, 8000, 0.40], [2000, 8000, 0.40], [2001, 10000, 0.50]]
+for (const [price, hours, pct] of bounds) {
+  const br = wearBracket(price)
+  assert(br.hours === hours && br.maintenancePct === pct, `wearBracket €${price}-> ${hours}h / ${Math.round(pct * 100)}%`, br)
+}
+assert(computeWear({ price: null, timeH: 5 }) == null && computeWear({ price: 500, timeH: null }) == null, 'computeWear needs both price and time', computeWear({ price: null, timeH: 5 }))
+const wear500 = computeWear({ price: 500, timeH: 4.7 })
+assert(wear500.lifespanHours === 5000 && wear500.maintenancePct === 0.30, '€500 printer: 5.000h life, 30% maintenance', wear500)
+assert(Math.abs(wear500.maintenanceCost - 150) < 1e-9, '€500 maintenance = €150', wear500.maintenanceCost)
+assert(Math.abs(wear500.maintenanceCoefficient - 1.3) < 1e-9, '€500 maintenance coefficient = 1.30', wear500.maintenanceCoefficient)
+assert(Math.abs(wear500.totalLifetimeCost - 650) < 1e-9, '€500 total lifetime cost = €650', wear500.totalLifetimeCost)
+assert(Math.abs(wear500.wearCostPerHour - 0.13) < 1e-9, '€500 wear = €0.13/h', wear500.wearCostPerHour)
+assert(Math.abs(wear500.printWearCost - 0.611) < 1e-9, '€500 print (4.7h) wear = €0.611', wear500.printWearCost)
+const wearCheap = computeWear({ price: 200, timeH: 10 })
+assert(Math.abs(wearCheap.wearCostPerHour - (250 / 3500)) < 1e-9, '€200 wear per hour = 250/3500', wearCheap.wearCostPerHour)
+assert(Math.abs(wearCheap.printWearCost - 2500 / 3500) < 1e-9, '€200 print (10h) wear', wearCheap.printWearCost)
+const wearPro = computeWear({ price: 3000, timeH: 2.5 })
+assert(Math.abs(wearPro.maintenanceCost - 1500) < 1e-9, '€3000 maintenance = €1500 (50%)', wearPro.maintenanceCost)
+assert(Math.abs(wearPro.wearCostPerHour - 0.45) < 1e-9, '€3000 wear = €0.45/h', wearPro.wearCostPerHour)
+assert(Math.abs(wearPro.printWearCost - 1.125) < 1e-9, '€3000 print (2.5h) wear = €1.125', wearPro.printWearCost)
+
+// Optional lifespan / maintenance overrides replace the bracket estimate.
+const wearOverride = computeWear({ price: 500, timeH: 4.7, lifespanHours: 4000, maintenancePct: 0.2 })
+assert(wearOverride.lifespanHours === 4000 && wearOverride.maintenancePct === 0.2, 'override life+maintenance used', wearOverride)
+assert(Math.abs(wearOverride.maintenanceCost - 100) < 1e-9, 'override maintenance = €100 (20%)', wearOverride.maintenanceCost)
+assert(Math.abs(wearOverride.maintenanceCoefficient - 1.2) < 1e-9, 'override coefficient = 1.20', wearOverride.maintenanceCoefficient)
+assert(Math.abs(wearOverride.totalLifetimeCost - 600) < 1e-9, 'override lifetime cost = €600', wearOverride.totalLifetimeCost)
+assert(Math.abs(wearOverride.wearCostPerHour - 0.15) < 1e-9, 'override wear = €0.15/h', wearOverride.wearCostPerHour)
+assert(Math.abs(wearOverride.printWearCost - 0.705) < 1e-9, 'override print (4.7h) wear = €0.705', wearOverride.printWearCost)
+const wearZeroMaint = computeWear({ price: 500, timeH: 2, maintenancePct: 0 })
+assert(Math.abs(wearZeroMaint.maintenanceCost) < 1e-9 && wearZeroMaint.maintenanceCoefficient === 1, '0% maintenance override is honoured', wearZeroMaint)
+assert(Math.abs(wearZeroMaint.printWearCost - 0.2) < 1e-9, 'no-maintenance wear = 500/5000×2 = €0.20', wearZeroMaint.printWearCost)
+const wearNullOverrides = computeWear({ price: 500, timeH: 4.7, lifespanHours: null, maintenancePct: null })
+assert(wearNullOverrides.lifespanHours === 5000 && wearNullOverrides.maintenancePct === 0.30, 'null overrides fall back to bracket', wearNullOverrides)
+const wearRawPct = computeWear({ price: 299, timeH: 1.29, lifespanHours: 3500, maintenancePct: 25 })
+assert(wearRawPct.maintenancePct === 0.25 && Math.abs(wearRawPct.maintenanceCost - 74.75) < 1e-9, 'raw percent (25) normalised to fraction', wearRawPct)
+const wearOnlyPrice = computeWear({ price: 299, timeH: 1.29 })
+assert(wearOnlyPrice.maintenancePct === 0.25 && Math.abs(wearOnlyPrice.maintenanceCost - 74.75) < 1e-9, 'price-only wear uses 25% bracket maintenance', wearOnlyPrice)
+assert(Math.abs(wearOnlyPrice.printWearCost - ((299 + 74.75) / 3500) * 1.29) < 1e-9, 'price-only wear amount', wearOnlyPrice.printWearCost)

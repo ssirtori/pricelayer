@@ -20,11 +20,22 @@ const printTimeHours = ref(null)
 const filamentPrice = ref(null)
 const weightOverride = ref(null)
 const costAdjustment = ref(0)
+const printerPrice = ref(null)
+const includeWearCost = ref(false)
+const wearLifespan = ref(null)
+const wearMaintenancePct = ref(null)
 
 async function handleFile (upcomingFile) {
   error.value = ''
   analysis.value = null
   file.value = upcomingFile
+  // File-scoped overrides must not leak between files: a weight or print-time
+  // typed for a previous model would otherwise freeze the estimate (and the
+  // infill/shell sliders) for every later upload.
+  weightOverride.value = null
+  printTimeHours.value = null
+  infill.value = 15
+  wallThickness.value = 0.5
   analyzing.value = true
 
   try {
@@ -109,6 +120,10 @@ function clearFile () {
         v-model:filamentPrice="filamentPrice"
         v-model:weightOverride="weightOverride"
         v-model:costAdjustment="costAdjustment"
+        v-model:printerPrice="printerPrice"
+        v-model:includeWearCost="includeWearCost"
+        v-model:wearLifespan="wearLifespan"
+        v-model:wearMaintenancePct="wearMaintenancePct"
       />
     </div>
 

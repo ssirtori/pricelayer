@@ -1,6 +1,7 @@
 <script setup>
 import { MATERIALS } from '~/data/materials'
 import printers from '~/data/printers.json'
+import { computeWear, wearBracket } from '~/composables/useWearCost'
 
 const props = defineProps({
   analysis: { type: Object, default: null },
@@ -12,7 +13,11 @@ const props = defineProps({
   printTime: { type: Number, default: null },
   filamentPrice: { type: Number, default: null },
   weightOverride: { type: Number, default: null },
-  costAdjustment: { type: Number, default: 0 }
+  costAdjustment: { type: Number, default: 0 },
+  printerPrice: { type: Number, default: null },
+  includeWearCost: { type: Boolean, default: false },
+  wearLifespan: { type: Number, default: null },
+  wearMaintenancePct: { type: Number, default: null }
 })
 
 const emit = defineEmits([
@@ -24,7 +29,11 @@ const emit = defineEmits([
   'update:printTime',
   'update:filamentPrice',
   'update:weightOverride',
-  'update:costAdjustment'
+  'update:costAdjustment',
+  'update:printerPrice',
+  'update:includeWearCost',
+  'update:wearLifespan',
+  'update:wearMaintenancePct'
 ])
 
 const density = computed(() => MATERIALS.find(m => m.id === props.material)?.density ?? MATERIALS[0].density)
@@ -173,9 +182,20 @@ const filamentCost = computed(() => {
   return (weightG.value / 1000) * effectivePricePerKg.value
 })
 
+const wear = computed(() => props.includeWearCost
+  ? computeWear({
+      price: props.printerPrice,
+      timeH: effectiveTimeH.value,
+      lifespanHours: props.wearLifespan,
+      // The UI receives/maintains a percentage; computeWear needs a fraction.
+      maintenancePct: props.wearMaintenancePct != null ? props.wearMaintenancePct / 100 : null
+    })
+  : null)
+const wearCost = computed(() => wear.value?.printWearCost ?? 0)
+
 const baseCost = computed(() => {
   if (energyCost.value == null || filamentCost.value == null) return null
-  return energyCost.value + filamentCost.value
+  return energyCost.value + filamentCost.value + (props.includeWearCost ? wearCost.value : 0)
 })
 // Surcharge: the selected percentage added ON TOP of the total print cost
 // (e.g. 25% → pay €X × 1.25). Presets 25/50/100% or a custom %; 0% = none.
@@ -211,6 +231,37 @@ const filamentStep = computed(() => {
   if (weightG.value == null || filamentCost.value == null || !effectivePricePerKg.value) return null
   const kg = weightG.value / 1000
   return `${formatNumber(weightG.value)} g ÷ 1000 = ${formatNumber(kg, 3)} kg × ${formatNumber(effectivePricePerKg.value, 2)} €/kg = ${formatCost(filamentCost.value)}`
+})
+const wearStep = computed(() => {
+  if (props.includeWearCost && wear.value != null) {
+    const w = wear.value
+    return `(${formatCost(props.printerPrice)} + ${formatCost(w.maintenanceCost)}) ÷ ${formatNumber(w.lifespanHours)} h × ${formatNumber(effectiveTimeH.value, 2)} h = ${formatCost(w.printWearCost)}`
+  }
+  return null
+})
+// Human snippet for the printer-price helper: useful life, maintenance %, and
+// the derived per-hour wear cost (already reflecting any user overrides).
+const wearInfo = computed(() => {
+  if (!props.includeWearCost) return null
+  if (props.printerPrice == null || !(props.printerPrice > 0)) return null
+  const bracket = wearBracket(props.printerPrice)
+  const w = wear.value
+  const hours = w ? w.lifespanHours : bracket.hours
+  const pct = w ? Math.round(w.maintenancePct * 100) : Math.round(bracket.maintenancePct * 100)
+  const parts = [`≈ ${formatNumber(hours)} h of useful life`, `maintenance ~${pct}% of the price`]
+  if (w) parts.push(`wear ≈ ${formatCost(w.wearCostPerHour)}/h`)
+  return parts.join(' · ')
+})
+// Bracket defaults for the override placeholders (needs a valid price).
+const wearBracketValue = computed(() => (props.printerPrice != null && props.printerPrice > 0) ? wearBracket(props.printerPrice) : null)
+const defaultLifespan = computed(() => wearBracketValue.value ? wearBracketValue.value.hours : null)
+const defaultMaintPct = computed(() => wearBracketValue.value ? Math.round(wearBracketValue.value.maintenancePct * 100) : null)
+// Euro components of the grand total, in display order.
+const totalBreakdown = computed(() => {
+  const parts = [formatCost(energyCost.value), formatCost(filamentCost.value)]
+  if (props.includeWearCost && wear.value != null) parts.push(formatCost(wear.value.printWearCost))
+  if (surchargeCost.value != null) parts.push(formatCost(surchargeCost.value))
+  return parts
 })
 // Which inputs are estimates rather than measured values.
 const estimateNotes = computed(() => {
@@ -420,6 +471,88 @@ function getMaterial (id) {
         </div>
       </div>
 
+      <label class="mt-5 flex items-start gap-3 rounded-xl border border-slate-700 bg-slate-800/50 p-4">
+        <input
+          id="include-wear"
+          type="checkbox"
+          class="mt-0.5 h-4 w-4 accent-cyan-400"
+          :checked="includeWearCost"
+          @change="emit('update:includeWearCost', $event.target.checked)"
+        >
+        <span>
+          <span class="block text-sm font-medium text-slate-200">Include printer wear cost</span>
+          <span class="mt-0.5 block text-xs text-slate-500">
+            Adds the machine's depreciation on this print — spread over an estimated useful life plus maintenance. Optional.
+          </span>
+        </span>
+      </label>
+
+      <div v-if="includeWearCost" class="mt-3 rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+        <label for="printer-price" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-400">
+          Printer price (purchase price)
+        </label>
+        <div class="flex items-center gap-2">
+          <input
+            id="printer-price"
+            type="number"
+            min="0"
+            step="10"
+            class="w-full max-w-56 rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-400 focus:outline-none"
+            :value="printerPrice ?? ''"
+            placeholder="e.g. 500"
+            @input="emit('update:printerPrice', parseNumber($event.target.value))"
+          >
+          <span class="shrink-0 text-sm text-slate-400">€</span>
+        </div>
+        <p v-if="printerPrice == null || !(printerPrice > 0)" class="mt-1 text-xs text-slate-500">
+          Enter what you paid for the printer — the wear cost reuses the print duration above and is a
+          share of (price + maintenance) over the machine's estimated useful life in printing hours.
+        </p>
+        <p v-else class="mt-1 text-xs text-slate-500">{{ wearInfo }}</p>
+
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="wear-lifespan" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-400">
+              Useful life override (h)
+            </label>
+            <div class="flex items-center gap-2">
+              <input
+                id="wear-lifespan"
+                type="number"
+                min="0"
+                step="100"
+                class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-400 focus:outline-none"
+                :value="wearLifespan ?? ''"
+                :placeholder="defaultLifespan != null ? String(defaultLifespan) : 'e.g. 6000'"
+                @input="emit('update:wearLifespan', parseNumber($event.target.value))"
+              >
+              <span class="shrink-0 text-sm text-slate-400">h</span>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Leave empty to use the estimated {{ defaultLifespan != null ? formatNumber(defaultLifespan) + ' h' : 'life' }}.</p>
+          </div>
+
+          <div>
+            <label for="wear-maintenance" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-400">
+              Maintenance override (% of price)
+            </label>
+            <div class="flex items-center gap-2">
+              <input
+                id="wear-maintenance"
+                type="number"
+                min="0"
+                step="1"
+                class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-400 focus:outline-none"
+                :value="wearMaintenancePct ?? ''"
+                :placeholder="defaultMaintPct != null ? String(defaultMaintPct) : 'e.g. 30'"
+                @input="emit('update:wearMaintenancePct', parseNumber($event.target.value))"
+              >
+              <span class="shrink-0 text-sm text-slate-400">%</span>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Leave empty to use {{ defaultMaintPct != null ? defaultMaintPct + '%' : 'the estimate' }}.</p>
+          </div>
+        </div>
+      </div>
+
       <p v-if="canUseGeometry" class="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-200">
         This geometric estimate is indicative only: shells, infill, supports and perimeters are approximated,
         not sliced. It is not a replacement for a real slicer’s precise calculation.
@@ -504,6 +637,10 @@ function getMaterial (id) {
           <span class="text-slate-400">Filament cost ({{ formatNumber(effectivePricePerKg) }} €/kg)</span>
           <span class="font-medium text-slate-100">{{ formatCost(filamentCost) }}</span>
         </div>
+        <div v-if="wear != null" class="flex items-center justify-between py-1">
+          <span class="text-slate-400">Wear cost ({{ formatNumber(props.printerPrice) }} € printer)</span>
+          <span class="font-medium text-slate-100">{{ formatCost(wearCost) }}</span>
+        </div>
         <div v-if="surchargeCost != null" class="flex items-center justify-between py-1">
           <span class="text-slate-400">Surcharge ({{ formatNumber(props.costAdjustment) }}%)</span>
           <span class="font-medium text-slate-100">+ {{ formatCost(surchargeCost) }}</span>
@@ -520,11 +657,12 @@ function getMaterial (id) {
           <p class="mb-1 font-medium uppercase tracking-wide text-slate-500">How it's calculated</p>
           <p>Energy&nbsp;= {{ energyStep }}</p>
           <p>Filament&nbsp;= {{ filamentStep }}</p>
+          <p v-if="wearStep">Wear&nbsp;= {{ wearStep }}</p>
           <p v-if="surchargeCost != null">
             Surcharge ({{ formatNumber(props.costAdjustment) }}%)&nbsp;= {{ formatCost(baseCost) }} × {{ formatNumber(props.costAdjustment) }}% = {{ formatCost(surchargeCost) }}
           </p>
           <p class="mt-1 font-medium text-slate-300">
-            Total&nbsp;= <template v-if="surchargeCost != null">{{ formatCost(energyCost) }} + {{ formatCost(filamentCost) }} + {{ formatCost(surchargeCost) }}</template><template v-else>{{ formatCost(energyCost) }} + {{ formatCost(filamentCost) }}</template>&nbsp;= {{ formatCost(totalCost) }}
+            Total&nbsp;= {{ totalBreakdown.join(' + ') }}&nbsp;= {{ formatCost(totalCost) }}
           </p>
           <p v-if="estimateNotes.length > 0" class="mt-1 text-slate-500">Note: {{ estimateNotes.join('; ') }}.</p>
         </div>
