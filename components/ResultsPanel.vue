@@ -51,7 +51,9 @@ const hasWallThickness = computed(() => settings.value?.wallThicknessMm != null)
 // not shown when a slicer-reported weight wins, or when there is no mesh.
 const canUseGeometry = computed(() => !isSlicerData.value && Boolean(props.analysis?.geometry))
 const showWallThicknessControl = computed(() => canUseGeometry.value && hasWallThickness.value)
-const showInfillControl = computed(() => canUseGeometry.value && hasInfill.value)
+// Infill only drives the geometric weight; with a manual weight override it has
+// nothing left to change, so the slider is hidden.
+const showInfillControl = computed(() => canUseGeometry.value && hasInfill.value && weightOverride.value == null)
 
 // Advise the user when the file doesn't carry a value and the geometric
 // estimate therefore falls back to the current default.
@@ -110,6 +112,12 @@ function parseNumber (value) {
   const n = Number(String(value).trim().replace(',', '.'))
   return Number.isFinite(n) ? n : null
 }
+
+// While the filament-price field is focused its displayed value must stay the
+// raw typed value: otherwise clearing the field emits '' → null and the
+// "?? materialPricePerKg" fallback would instantly repopulate it with the
+// material default, making the field impossible to edit.
+const priceInputFocused = ref(false)
 
 // ------------------------------------------------------------------
 // Printer & print cost
@@ -175,7 +183,13 @@ const energyCost = computed(() => (
 const weightG = computed(() => primaryWeight.value)
 
 const materialPricePerKg = computed(() => getMaterial(props.material)?.pricePerKg ?? 0)
-const effectivePricePerKg = computed(() => (props.filamentPrice != null && props.filamentPrice > 0 ? props.filamentPrice : null))
+// The user's typed price wins; otherwise the material's default price applies,
+// so switching material (PLA/PETG 25, ABS 22, TPU 32 €/kg) updates the cost.
+// Clearing a manual value falls back to the material default again.
+const effectivePricePerKg = computed(() => {
+  if (props.filamentPrice != null && props.filamentPrice > 0) return props.filamentPrice
+  return materialPricePerKg.value > 0 ? materialPricePerKg.value : null
+})
 
 const filamentCost = computed(() => {
   if (weightG.value == null || !effectivePricePerKg.value) return null
@@ -276,7 +290,7 @@ const estimateNotes = computed(() => {
 const missingCostInputs = computed(() => {
   const missing = []
   if (!(Number.isFinite(props.kwhRate) && props.kwhRate > 0)) missing.push('an electricity rate')
-  if (!(props.filamentPrice != null && props.filamentPrice > 0)) missing.push('a filament price')
+  if (!effectivePricePerKg.value) missing.push('a filament price')
   if (effectiveTimeH.value == null) missing.push('a print duration')
   if (primaryWeight.value == null) missing.push('a filament weight')
   return missing
@@ -313,11 +327,13 @@ function getMaterial (id) {
   <div v-if="analysis" class="space-y-6">
     <!-- Printer & print cost -->
     <div v-if="analysis" class="rounded-2xl border-2 border-cyan-400/40 bg-cyan-500/10 p-6 shadow-lg shadow-cyan-500/10">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-sm font-medium uppercase tracking-wide text-cyan-300">Print cost</h2>
-        <span v-if="totalCost != null" class="text-4xl font-extrabold leading-none text-cyan-50">{{ formatCost(totalCost) }}</span>
-        <span v-else-if="!canEstimateEnergy" class="text-sm text-slate-500">Energy cost cannot be estimated for this printer.</span>
-        <span v-else class="text-sm text-slate-500">Enter {{ missingCostText }} to see the total cost</span>
+      <div class="sticky top-0 z-10 -mx-6 -mt-6 mb-4 rounded-t-2xl border-b border-cyan-400/20 bg-slate-900/95 px-6 py-4 shadow-lg backdrop-blur-md">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-sm font-medium uppercase tracking-wide text-cyan-300">Print cost</h2>
+          <span v-if="totalCost != null" class="text-4xl font-extrabold leading-none text-cyan-50">{{ formatCost(totalCost) }}</span>
+          <span v-else-if="!canEstimateEnergy" class="text-sm text-slate-500">Energy cost cannot be estimated for this printer.</span>
+          <span v-else class="text-sm text-slate-500">Enter {{ missingCostText }} to see the total cost</span>
+        </div>
       </div>
 
       <div class="mt-4">
@@ -367,14 +383,16 @@ function getMaterial (id) {
               min="0"
               step="0.5"
               class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-400 focus:outline-none"
-              :value="filamentPrice ?? ''"
+              :value="priceInputFocused ? (filamentPrice ?? '') : (filamentPrice ?? materialPricePerKg)"
               :placeholder="String(materialPricePerKg)"
+              @focus="priceInputFocused = true"
+              @blur="priceInputFocused = false"
               @input="emit('update:filamentPrice', parseNumber($event.target.value))"
             >
             <span class="shrink-0 text-sm text-slate-400">€/kg</span>
           </div>
           <p class="mt-1 text-xs text-slate-500">
-            Required — usually €{{ materialPricePerKg }}/kg for {{ getMaterial(material).name }}; enter the price you actually pay.
+            Defaults to the typical €{{ materialPricePerKg }}/kg for {{ getMaterial(material).name }}; type the price you actually pay to use it instead.
           </p>
         </div>
 

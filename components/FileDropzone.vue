@@ -8,7 +8,6 @@ const props = defineProps({
 
 const emit = defineEmits(['file', 'error'])
 
-const input = ref(null)
 const dragOver = ref(false)
 
 function formatSize (bytes) {
@@ -39,9 +38,8 @@ function onDrop (event) {
   acceptFile(event.dataTransfer?.files?.[0])
 }
 
-function openPicker () {
-  if (props.analyzing) return
-  input.value?.click()
+function onZoneClick (event) {
+  if (props.analyzing) event.preventDefault()
 }
 
 function onInput (event) {
@@ -52,8 +50,9 @@ function onInput (event) {
 
 <template>
   <div>
-    <div
-      class="group relative rounded-2xl border-2 border-dashed p-8 text-center transition-colors"
+    <label
+      for="3mf-file-input"
+      class="group relative block cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-colors"
       :class="[
         error ? 'border-red-400/60 bg-red-500/5' : dragOver
           ? 'border-cyan-400 bg-cyan-400/10'
@@ -62,8 +61,9 @@ function onInput (event) {
       @dragover.prevent="dragOver = true"
       @dragleave.prevent="dragOver = false"
       @drop.prevent="onDrop"
+      @click="onZoneClick"
     >
-      <input ref="input" type="file" accept=".3mf,application/vnd.ms-package.3dmanufacturing-3dmodel" class="hidden" @input="onInput">
+      <input id="3mf-file-input" type="file" accept=".3mf,application/octet-stream" class="sr-only" @input="onInput">
 
       <div v-if="!analyzing" class="mx-auto flex max-w-md flex-col items-center gap-3">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -73,16 +73,15 @@ function onInput (event) {
           Drag &amp; drop a <span class="text-cyan-300">.3mf</span> file here
         </p>
         <p class="text-sm text-slate-400">or</p>
-        <button
-          type="button"
-          class="rounded-lg bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow transition-colors hover:bg-cyan-400"
-          @click="openPicker"
+        <span
+          class="inline-block rounded-lg bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow transition-colors hover:bg-cyan-400"
         >
           Browse files
-        </button>
+        </span>
         <p class="text-xs text-slate-500">
           All processing happens locally in your browser — nothing is uploaded.
         </p>
+        <p class="text-xs text-slate-500">On iPhone/iPad use “Browse files” — drag &amp; drop isn't available on iOS.</p>
       </div>
 
       <div v-else class="mx-auto flex max-w-md flex-col items-center gap-3 py-4">
@@ -91,7 +90,7 @@ function onInput (event) {
         </span>
         <p class="text-sm font-medium text-slate-200">Reading {{ fileName }}…</p>
       </div>
-    </div>
+    </label>
 
     <div v-if="fileName && !analyzing" class="mt-3 flex items-center justify-between text-sm">
       <span class="truncate font-medium text-slate-200">{{ fileName }}</span>

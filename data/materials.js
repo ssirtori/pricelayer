@@ -5,7 +5,7 @@
  * material cost; the user can override it in the print-cost panel.
  */
 export const MATERIALS = [
-  { id: 'PLA', name: 'PLA', density: 1.24, pricePerKg: 20 },
+  { id: 'PLA', name: 'PLA', density: 1.24, pricePerKg: 25 },
   { id: 'PETG', name: 'PETG', density: 1.27, pricePerKg: 25 },
   { id: 'ABS', name: 'ABS', density: 1.04, pricePerKg: 22 },
   { id: 'TPU', name: 'TPU', density: 1.21, pricePerKg: 32 }
